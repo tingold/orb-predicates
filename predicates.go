@@ -1,83 +1,58 @@
+// Package predicates provides spatial relationship predicates for orb geometry types.
+//
+// This package implements the standard OGC/DE-9IM spatial predicates:
+//   - Within: geometry A is completely inside geometry B
+//   - Contains: geometry A completely contains geometry B
+//   - Covers: no point in B is outside of A
+//   - CoveredBy: no point in A is outside of B
+//   - Crosses: geometries have some but not all interior points in common
+//   - Disjoint: geometries have no points in common
+//   - Intersects: geometries have at least one point in common
+//   - Overlaps: geometries share some but not all points, same dimension
+//   - Touches: geometries touch at boundaries only
+//
+// Supported geometry types:
+//   - Point
+//   - MultiPoint
+//   - LineString
+//   - MultiLineString
+//   - Ring
+//   - Polygon
+//   - MultiPolygon
+//   - Collection
+//   - Bound
+//
+// All predicates handle all valid combinations of geometry types.
+//
+// Example usage:
+//
+//	poly := orb.Polygon{
+//	    orb.Ring{
+//	        orb.Point{0, 0},
+//	        orb.Point{10, 0},
+//	        orb.Point{10, 10},
+//	        orb.Point{0, 10},
+//	        orb.Point{0, 0},
+//	    },
+//	}
+//	point := orb.Point{5, 5}
+//
+//	if predicates.Within(point, poly) {
+//	    fmt.Println("Point is within polygon")
+//	}
+//
+//	if predicates.Contains(poly, point) {
+//	    fmt.Println("Polygon contains point")
+//	}
 package predicates
 
-import (
-	"github.com/paulmach/orb"
-	"github.com/paulmach/orb/planar"
-)
-
-// Within returns true if geometry a is completely inside geometry b.
-func Within(a, b orb.Geometry) bool {
-	switch gA := a.(type) {
-	case orb.Point:
-		switch gB := b.(type) {
-		case orb.Polygon:
-			return planar.PolygonContains(gB, gA)
-		}
-	case orb.LineString:
-		switch gB := b.(type) {
-		case orb.Polygon:
-			for _, p := range gA {
-				if !planar.PolygonContains(gB, p) {
-					return false
-				}
-			}
-			return true
-		}
-	case orb.Polygon:
-		switch gB := b.(type) {
-		case orb.Polygon:
-			for _, ring := range gA {
-				for _, p := range ring {
-					if !planar.PolygonContains(gB, p) {
-						return false
-					}
-				}
-			}
-			return true
-		}
-	}
-
-	return false
-}
-
-// Contains returns true if geometry b is completely inside geometry a.
-func Contains(a, b orb.Geometry) bool {
-	return Within(b, a)
-}
-
-// Covers returns true if no point in geometry b is outside of geometry a.
-func Covers(a, b orb.Geometry) bool {
-	return false
-}
-
-// CoveredBy returns true if no point in geometry a is outside of geometry b.
-func CoveredBy(a, b orb.Geometry) bool {
-	return Covers(b, a)
-}
-
-// Crosses returns true if the geometries have some but not all interior points in common.
-func Crosses(a, b orb.Geometry) bool {
-	return false
-}
-
-// Disjoint returns true if the geometries have no points in common.
-func Disjoint(a, b orb.Geometry) bool {
-	return false
-}
-
-// Intersects returns true if the geometries have at least one point in common.
-func Intersects(a, b orb.Geometry) bool {
-	return false
-}
-
-// Overlaps returns true if the geometries have some but not all points in common,
-// have the same dimension, and the intersection of the interiors of the two
-// geometries has the same dimension as the geometries themselves.
-func Overlaps(a, b orb.Geometry) bool {
-	return false
-}
-
-// Touches returns true if the geometries have at least one point in common, but their interiors do not.
-func Touches(a, b orb.Geometry) bool {
-	return false
-}
+// The main predicate functions are implemented in separate files:
+// - within.go: Within, Contains
+// - covers.go: Covers, CoveredBy
+// - intersects.go: Intersects
+// - disjoint.go: Disjoint
+// - crosses.go: Crosses
+// - overlaps.go: Overlaps
+// - touches.go: Touches
+//
+// Helper functions are in helpers.go
