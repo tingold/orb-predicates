@@ -4,6 +4,13 @@ Spatial relationship predicates for [orb](https://github.com/paulmach/orb) geome
 
 This package implements the standard **OGC/DE-9IM spatial predicates** for determining topological relationships between geometries.
 
+## Features
+
+- Implements the complete OGC/DE-9IM predicate set (`Within`, `Contains`, `Covers`, `CoveredBy`, `Intersects`, `Disjoint`, `Touches`, `Crosses`, `Overlaps`).
+- Supports every `orb` geometry type (including `orb.Collection` and `orb.Bound`) for any combination of A/B inputs.
+- Validated against thousands of official [JTS Topology Suite](https://github.com/locationtech/jts) XML test cases that live under `testdata/jts`.
+- Ships with extensive Go unit tests that describe the tricky edge cases you typically run into when working with GIS data.
+
 ## Installation
 
 ```bash
@@ -129,6 +136,30 @@ overlapping := orb.Polygon{
 fmt.Println(predicates.Overlaps(largeSquare, overlapping)) // true
 fmt.Println(predicates.Intersects(largeSquare, overlapping)) // true
 ```
+
+## Testing
+
+Run the complete unit test suite:
+
+```bash
+go test ./...
+```
+
+### JTS compatibility suite
+
+`TestJTSPredicates` replays the official [JTS Topology Suite](https://github.com/locationtech/jts) XML fixtures located in `testdata/jts` and verifies that `Intersects`, `Contains`, `Within`, `Covers`, `CoveredBy`, `Crosses`, `Overlaps`, `Touches`, and `Disjoint` all mirror JTS behaviour.
+
+```bash
+go test ./... -run JTSPredicates -v
+```
+
+Need a quick overview of what those XML files contain? `TestJTSSummary` prints counts for each predicate so you can tell whether a new fixture increases coverage:
+
+```bash
+go test ./... -run JTSSummary -v
+```
+
+The XML files are copied from the JTS repository (see `testdata/jts`) and can be extended by dropping additional fixtures into that directory.
 
 ### Using Bounds
 
