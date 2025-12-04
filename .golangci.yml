@@ -1,0 +1,5 @@
+version: 2
+
+linters:
+  disable:
+    - unused  # Disable unused checks since this is a library package designed to be imported
