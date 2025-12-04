@@ -291,7 +291,7 @@ func crossesLineString(ls orb.LineString, b orb.Geometry) bool {
 func lineStringCrossesLineString(ls1, ls2 orb.LineString) bool {
 	// Lines cross if they intersect at a point (not overlap along a segment)
 	// and the intersection is in the interior of both
-	// 
+	//
 	// Important: If one line is contained within the other, or if they share
 	// a segment, they do NOT cross - crosses requires the intersection to be
 	// a point, not a line segment.

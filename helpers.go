@@ -219,6 +219,11 @@ func segmentOnRingBoundary(a, b orb.Point, r orb.Ring) bool {
 
 // ringsIntersect checks if two rings have any intersection (boundary or interior)
 func ringsIntersect(r1, r2 orb.Ring) bool {
+	// Quick bounding box rejection
+	if !ringBoundsOverlap(r1, r2) {
+		return false
+	}
+
 	// Check edge intersections
 	for i := 0; i < len(r1)-1; i++ {
 		for j := 0; j < len(r2)-1; j++ {
@@ -241,6 +246,11 @@ func ringsIntersect(r1, r2 orb.Ring) bool {
 
 // ringBoundariesIntersect checks if ring boundaries intersect
 func ringBoundariesIntersect(r1, r2 orb.Ring) bool {
+	// Quick bounding box rejection
+	if !ringBoundsOverlap(r1, r2) {
+		return false
+	}
+
 	for i := 0; i < len(r1)-1; i++ {
 		for j := 0; j < len(r2)-1; j++ {
 			if segmentsIntersect(r1[i], r1[i+1], r2[j], r2[j+1]) {
@@ -253,6 +263,11 @@ func ringBoundariesIntersect(r1, r2 orb.Ring) bool {
 
 // lineStringsIntersect checks if two linestrings intersect
 func lineStringsIntersect(ls1, ls2 orb.LineString) bool {
+	// Quick bounding box rejection
+	if !lineStringBoundsOverlap(ls1, ls2) {
+		return false
+	}
+
 	for i := 0; i < len(ls1)-1; i++ {
 		for j := 0; j < len(ls2)-1; j++ {
 			if segmentsIntersect(ls1[i], ls1[i+1], ls2[j], ls2[j+1]) {
@@ -265,6 +280,11 @@ func lineStringsIntersect(ls1, ls2 orb.LineString) bool {
 
 // lineStringIntersectsRing checks if a linestring intersects a ring
 func lineStringIntersectsRing(ls orb.LineString, r orb.Ring) bool {
+	// Quick bounding box rejection
+	if !lineStringRingBoundsOverlap(ls, r) {
+		return false
+	}
+
 	for i := 0; i < len(ls)-1; i++ {
 		for j := 0; j < len(r)-1; j++ {
 			if segmentsIntersect(ls[i], ls[i+1], r[j], r[j+1]) {
@@ -284,6 +304,38 @@ func boundingBoxOverlap(a, b orb.Geometry) bool {
 		ba.Max[0] >= bb.Min[0]-epsilon &&
 		ba.Min[1] <= bb.Max[1]+epsilon &&
 		ba.Max[1] >= bb.Min[1]-epsilon
+}
+
+// boundsOverlap checks if two bounds overlap (with epsilon tolerance)
+func boundsOverlap(a, b orb.Bound) bool {
+	return a.Min[0] <= b.Max[0]+epsilon &&
+		a.Max[0] >= b.Min[0]-epsilon &&
+		a.Min[1] <= b.Max[1]+epsilon &&
+		a.Max[1] >= b.Min[1]-epsilon
+}
+
+// ringBoundsOverlap checks if the bounding boxes of two rings overlap
+func ringBoundsOverlap(r1, r2 orb.Ring) bool {
+	if len(r1) == 0 || len(r2) == 0 {
+		return false
+	}
+	return boundsOverlap(orb.Ring(r1).Bound(), orb.Ring(r2).Bound())
+}
+
+// lineStringBoundsOverlap checks if the bounding boxes of two linestrings overlap
+func lineStringBoundsOverlap(ls1, ls2 orb.LineString) bool {
+	if len(ls1) == 0 || len(ls2) == 0 {
+		return false
+	}
+	return boundsOverlap(orb.LineString(ls1).Bound(), orb.LineString(ls2).Bound())
+}
+
+// lineStringRingBoundsOverlap checks if the bounding boxes of a linestring and ring overlap
+func lineStringRingBoundsOverlap(ls orb.LineString, r orb.Ring) bool {
+	if len(ls) == 0 || len(r) == 0 {
+		return false
+	}
+	return boundsOverlap(orb.LineString(ls).Bound(), orb.Ring(r).Bound())
 }
 
 // boundToPolygon converts a Bound to a Polygon

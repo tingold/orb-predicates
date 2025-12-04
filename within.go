@@ -1,6 +1,8 @@
 package predicates
 
 import (
+	"math"
+
 	"github.com/paulmach/orb"
 	"github.com/paulmach/orb/planar"
 )
@@ -472,37 +474,51 @@ func lineStringWithinMultiPolygon(ls orb.LineString, mp orb.MultiPolygon) bool {
 		}
 	}
 
-	// Check multiple sample points along each segment (not just midpoint)
-	// This catches gaps where the line passes between polygons
-	// Use adaptive sampling based on segment length to catch small gaps
-	// at polygon junctions (e.g., 1000 samples per unit of length)
-	segLength := ls[len(ls)-1][1] - ls[0][1]
-	if segLength < 0 {
-		segLength = -segLength
-	}
-	dx := ls[len(ls)-1][0] - ls[0][0]
-	if dx < 0 {
-		dx = -dx
-	}
-	if dx > segLength {
-		segLength = dx
-	}
-	numSamples := int(segLength * 100) // 100 samples per unit
-	if numSamples < 100 {
-		numSamples = 100
-	}
-	if numSamples > 10000 {
-		numSamples = 10000
-	}
+	// For each segment, check sample points to catch gaps between polygons
+	// Also specifically check points near polygon vertices/boundaries
+	// This is much more efficient than the original 10,000 samples
+	const numSamples = 50
 	for i := 0; i < len(ls)-1; i++ {
+		segStart, segEnd := ls[i], ls[i+1]
+
+		// Regular sampling along the segment
 		for s := 1; s < numSamples; s++ {
 			t := float64(s) / float64(numSamples)
 			sample := orb.Point{
-				ls[i][0] + t*(ls[i+1][0]-ls[i][0]),
-				ls[i][1] + t*(ls[i+1][1]-ls[i][1]),
+				segStart[0] + t*(segEnd[0]-segStart[0]),
+				segStart[1] + t*(segEnd[1]-segStart[1]),
 			}
 			if !pointInAnyPoly(sample) {
 				return false
+			}
+		}
+
+		// Additionally, check points near polygon vertex y-coordinates
+		// This catches gaps at polygon junctions
+		for _, poly := range mp {
+			for _, ring := range poly {
+				for _, vertex := range ring {
+					// Find t value where line crosses this vertex's y-coordinate
+					dy := segEnd[1] - segStart[1]
+					if math.Abs(dy) > epsilon {
+						t := (vertex[1] - segStart[1]) / dy
+						if t > epsilon && t < 1-epsilon {
+							// Check points slightly before and after this y-level
+							for _, offset := range []float64{-0.0001, 0, 0.0001} {
+								tAdj := t + offset
+								if tAdj > 0 && tAdj < 1 {
+									sample := orb.Point{
+										segStart[0] + tAdj*(segEnd[0]-segStart[0]),
+										segStart[1] + tAdj*(segEnd[1]-segStart[1]),
+									}
+									if !pointInAnyPoly(sample) {
+										return false
+									}
+								}
+							}
+						}
+					}
+				}
 			}
 		}
 	}
@@ -516,18 +532,12 @@ func lineStringWithinMultiPolygon(ls orb.LineString, mp orb.MultiPolygon) bool {
 		}
 	}
 
-	// Check segment samples for interior
+	// Check segment midpoints for interior
 	for i := 0; i < len(ls)-1; i++ {
-		for s := 1; s < numSamples; s++ {
-			t := float64(s) / float64(numSamples)
-			sample := orb.Point{
-				ls[i][0] + t*(ls[i+1][0]-ls[i][0]),
-				ls[i][1] + t*(ls[i+1][1]-ls[i][1]),
-			}
-			for _, poly := range mp {
-				if pointInPolygonInterior(sample, poly) {
-					return true
-				}
+		mid := orb.Point{(ls[i][0] + ls[i+1][0]) / 2, (ls[i][1] + ls[i+1][1]) / 2}
+		for _, poly := range mp {
+			if pointInPolygonInterior(mid, poly) {
+				return true
 			}
 		}
 	}
