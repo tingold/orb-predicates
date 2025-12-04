@@ -194,11 +194,8 @@ func lineStringOverlapsMultiLineString(ls orb.LineString, mls orb.MultiLineStrin
 			break
 		}
 	}
-	if allCovered {
-		return false
-	}
 
-	return true
+	return !allCovered
 }
 
 // overlapsMultiLineString handles MultiLineString overlaps geometry

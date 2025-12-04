@@ -422,7 +422,7 @@ func polygonContainsRing(poly orb.Polygon, r orb.Ring) bool {
 
 // getGeometryDimension returns the dimension of a geometry (0=point, 1=line, 2=area)
 func getGeometryDimension(g orb.Geometry) int {
-	switch g.(type) {
+	switch c := g.(type) {
 	case orb.Point, orb.MultiPoint:
 		return 0
 	case orb.LineString, orb.MultiLineString:
@@ -431,7 +431,6 @@ func getGeometryDimension(g orb.Geometry) int {
 		return 2
 	case orb.Collection:
 		// Collection dimension is the max of its components
-		c := g.(orb.Collection)
 		maxDim := -1
 		for _, geom := range c {
 			d := getGeometryDimension(geom)
