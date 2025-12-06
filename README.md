@@ -4,6 +4,8 @@ Spatial relationship predicates for [orb](https://github.com/paulmach/orb) geome
 
 This package implements the standard **OGC/DE-9IM spatial predicates** for determining topological relationships between geometries.
 
+[![CI](https://github.com/tingold/orb-predicates/actions/workflows/ci.yml/badge.svg)](https://github.com/tingold/orb-predicates/actions/workflows/ci.yml)
+
 ## Features
 
 - Implements the complete OGC/DE-9IM predicate set (`Within`, `Contains`, `Covers`, `CoveredBy`, `Intersects`, `Disjoint`, `Touches`, `Crosses`, `Overlaps`).
